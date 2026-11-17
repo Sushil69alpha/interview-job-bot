@@ -36,9 +36,10 @@ export default function Interview() {
   const [userDetails, setUserDetails] = useContext(UserDetailsContext);
 
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
-  const [redo, setRedo] = useState(false);
   const [interviewerTalking, setInterviewerTalking] = useState(false);
-  const [questionDisplay, setQuestionDisplay] = useState('');
+  const [questionDisplay, setQuestionDisplay] = useState(
+    'Welcome to your interview, ' + userDetails.name.replace(/ .*/, '')
+  );
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [modalOpen, setModalOpen] = useState(true);
 
@@ -46,6 +47,7 @@ export default function Interview() {
   const interviewerPlayer = useRef(null);
   const speech = useRef(null);
   const ready = useRef(false);
+  const redo = useRef(false);
 
   const { complete } = useCompletion({
     api: '/util/chatGPT',
@@ -157,23 +159,17 @@ export default function Interview() {
   });
 
   const redoQuestion = () => {
-    setRedo(true);
+    redo.current = true;
     stopRecording();
   };
-
-  useEffect(() => {
-    setQuestionDisplay(
-      'Welcome to your interview, ' + userDetails.name.replace(/ .*/, '')
-    );
-  }, []);
 
   useEffect(() => {
     if (!recordingBlob) {
       return;
     }
 
-    if (redo) {
-      setRedo(false);
+    if (redo.current) {
+      redo.current = false;
       startRecording();
       return;
     }
@@ -248,7 +244,7 @@ export default function Interview() {
               </ListItem>
             </List>
             <Typography>
-              Best of luck! We'll see you afterwards with your feedback.
+              Best of luck! We&apos;ll see you afterwards with your feedback.
             </Typography>
             <Box
               sx={{
@@ -264,7 +260,7 @@ export default function Interview() {
                 endIcon={<ArrowForward />}
                 onClick={closeModal}
               >
-                Let's Go!
+                Let&apos;s Go!
               </Button>
             </Box>
           </Box>
