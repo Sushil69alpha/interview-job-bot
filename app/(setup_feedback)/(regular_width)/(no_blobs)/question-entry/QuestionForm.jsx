@@ -75,14 +75,14 @@ export default function QuestionForm() {
     if (questionList.length < 3) {
       setAlertText('Please have at least three questions');
     } else {
-      setQuestions(questionList);
+      setQuestions(displayedQuestionList);
       router.push('/setup-overview');
     }
   };
 
   const handleBack = (e) => {
     e.preventDefault();
-    setQuestions(questionList);
+    setQuestions(displayedQuestionList);
     router.push('/job-info');
   };
 
@@ -109,9 +109,41 @@ export default function QuestionForm() {
     }
   });
 
+  const completionRef = useRef('');
+  const updateLastQuestion = (completionText) => {
+    setQuestionList((currentList) => {
+      const lastIndex = currentList.length - 1;
+      if (lastIndex < 0) {
+        return currentList;
+      }
+
+      const newList = [...currentList];
+      newList[lastIndex] = { ...newList[lastIndex], question: completionText };
+      return newList;
+    });
+  };
+
   const { complete, completion, isLoading } = useCompletion({
     api: '/util/chatGPT',
+    onFinish: (_prompt, finalCompletion) => {
+      updateLastQuestion(finalCompletion);
+    },
+    onError: () => {
+      updateLastQuestion(completionRef.current);
+    },
   });
+
+  useEffect(() => {
+    completionRef.current = completion;
+  }, [completion]);
+
+  const displayedQuestionList = isLoading
+    ? questionList.map((item, index) =>
+        index === questionList.length - 1
+          ? { ...item, question: completion }
+          : item
+      )
+    : questionList;
 
   const generateQuestion = async () => {
     const requestBody = {
@@ -126,14 +158,6 @@ export default function QuestionForm() {
       { question: '', answer: '', isAI: true },
     ]);
   };
-
-  useEffect(() => {
-    if (isLoading) {
-      let newList = questionList;
-      newList[questionList.length - 1].question = completion;
-      setQuestionList[newList];
-    }
-  }, [completion]);
 
   return (
     <Box component='form' onSubmit={handleComplete}>
@@ -161,7 +185,7 @@ export default function QuestionForm() {
                   overflow='auto'
                   className='greyScroll'
                 >
-                  {questionList.map((item, index) => {
+                  {displayedQuestionList.map((item, index) => {
                     console.log(index);
                     return (
                       <Draggable
